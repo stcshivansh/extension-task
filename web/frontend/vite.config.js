@@ -58,5 +58,7 @@ export default defineConfig({
       "^/(\\?.*)?$": proxyOptions,
       "^/api(/|(\\?.*)?$)": proxyOptions,
     },
+    cors:true
   },
+
 });

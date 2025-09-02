@@ -44,34 +44,32 @@ app.use((req, res, next) => {
   console.log(`Incoming request from: ${origin}`);
   next();
 });
+console.log(process.env.REMIX_DEV_ORIGIN)
 const corsOptions = {
-  origin: [
-    'https://extensions.shopifycdn.com',
-    'https://extensions.shopifycdn.com/'
-  ],
+  origin:"*"
 };
 app.use(cors(corsOptions));
 
+app.get('/hi',(req,res)=>{console.log("hitted");return res.json("working")})
+app.use('/api/extensions',extensionRoutes)
 
-app.get('/api/extensions',extensionRoutes)
 
 
+// app.get("/api/products/count", async (_req, res) => {
+//   const client = new shopify.api.clients.Graphql({
+//     session: res.locals.shopify.session,
+//   });
 
-app.get("/api/products/count", async (_req, res) => {
-  const client = new shopify.api.clients.Graphql({
-    session: res.locals.shopify.session,
-  });
+//   const countData = await client.request(`
+//     query shopifyProductCount {
+//       productsCount {
+//         count
+//       }
+//     }
+//   `);
 
-  const countData = await client.request(`
-    query shopifyProductCount {
-      productsCount {
-        count
-      }
-    }
-  `);
-
-  res.status(200).send({ count: countData.data.productsCount.count });
-});
+//   res.status(200).send({ count: countData.data.productsCount.count });
+// });
 
 app.post("/api/products", async (_req, res) => {
   let status = 200;
@@ -101,4 +99,4 @@ app.use("/*", shopify.ensureInstalledOnShop(), async (_req, res, _next) => {
     );
 });
 
-app.listen(PORT);
+app.listen(PORT,()=>console.log("server is runnig on port ",PORT));

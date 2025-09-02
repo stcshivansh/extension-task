@@ -1,0 +1,118 @@
+{% if product %}
+  <button 
+    id="wishlist-btn"
+    data-product-id="{{ product.id }}"
+    data-id="{{ customer.id }}"
+    class="wishlist-button"
+  >
+    Add to Wishlist
+  </button>
+
+  <style>
+    .wishlist-button {
+      padding: 10px 15px;
+      background: #000000ff;
+      color: white;
+      border: none;
+      cursor: pointer;
+         
+      max-width: 440px; 
+      min-width: 345px; 
+    }
+    .wishlist-button.added {
+      background: #4caf50;
+    }
+  </style>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", async function () {
+    const btn = document.getElementById("wishlist-btn");
+    if (!btn) return;
+
+    const productId = btn.getAttribute("data-product-id");
+    const customerId = btn.getAttribute("data-id");
+
+    if (!customerId) {
+        btn.disabled = true;
+        btn.innerText = "Login to Wishlist";
+        btn.style.backgroundColor = "#ccc";
+        btn.style.cursor = "not-allowed";
+        return;
+    }
+
+    const gidCustomerId = "gid://shopify/Customer/" + customerId;
+    const productGid = productId.startsWith("gid://shopify/Product/") 
+        ? productId 
+        : "gid://shopify/Product/" + productId;
+
+    let isInWishlist = false;
+
+    // Fetch wishlist
+    try {
+        const res = await fetch(`https://ethernet-er-rat-authorized.trycloudflare.com/api/extensions/wishlist/listProducts`, {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            "id": gidCustomerId
+        }
+        });
+
+        const data = await res.json();
+
+        if (data.success && data.data?.length > 0) {
+        isInWishlist = data.data.some(p => p.id === productGid);
+        if (isInWishlist) {
+            btn.innerText = "Remove from Wishlist";
+            btn.classList.add("added");
+        }
+        }
+    } catch (err) {
+        console.error("Error fetching wishlist:", err);
+    }
+
+    // Toggle wishlist
+    btn.addEventListener("click", async () => {
+        const endpoint = isInWishlist
+        ? "https://ethernet-er-rat-authorized.trycloudflare.com/api/extensions/wishlist/removeProducts"
+        : "https://ethernet-er-rat-authorized.trycloudflare.com/api/extensions/wishlist/addProducts";
+
+        const method = isInWishlist ? "DELETE" : "PATCH";
+
+        try {
+        const res = await fetch(endpoint, {
+            method: method,
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ 
+            id: gidCustomerId,
+            productId: productGid 
+            })
+        });
+
+        const result = await res.json();
+        if (result.success) {
+            isInWishlist = !isInWishlist;
+            btn.innerText = isInWishlist ? "Remove from Wishlist" : "Add to Wishlist";
+            btn.classList.toggle("added", isInWishlist);
+        } else {
+            alert("Something went wrong");
+        }
+        } catch (err) {
+        console.error("Wishlist Error:", err);
+        alert("Error updating wishlist");
+        }
+    });
+    });
+
+  </script>
+
+
+
+{% endif %}
+
+{% schema %}
+{
+  "name": "Wishlist Button",
+  "target": "section",
+  "settings": []
+}
+{% endschema %}
